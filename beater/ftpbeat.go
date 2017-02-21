@@ -75,16 +75,16 @@ func (bt *Ftpbeat) Config(b *beat.Beat) error {
 }
 
 func (bt *Ftpbeat) PrintConfig() {
-	fmt.Println("===========================================================")
-	fmt.Printf("Period          : %v\n", bt.beatConfig.Ftpbeat.Period)
-	fmt.Printf("ConnectType     : %v\n", bt.beatConfig.Ftpbeat.ConnectType)
-	fmt.Printf("Hostname        : %v\n", bt.beatConfig.Ftpbeat.Hostname)
-	fmt.Printf("Port            : %v\n", bt.beatConfig.Ftpbeat.Port)
-	fmt.Printf("Username        : %v\n", bt.beatConfig.Ftpbeat.Username)
-	fmt.Printf("RemoteDirectory : %v\n", bt.beatConfig.Ftpbeat.RemoteDirectory)
-	fmt.Printf("Files           : %v\n", bt.beatConfig.Ftpbeat.Files)
-	fmt.Printf("ExecuteType     : %v\n", bt.beatConfig.Ftpbeat.ExecuteType)
-	fmt.Println("===========================================================")
+	logp.Info("===========================================================")
+	logp.Info("Period          : %v\n", bt.beatConfig.Ftpbeat.Period)
+	logp.Info("ConnectType     : %v\n", bt.beatConfig.Ftpbeat.ConnectType)
+	logp.Info("Hostname        : %v\n", bt.beatConfig.Ftpbeat.Hostname)
+	logp.Info("Port            : %v\n", bt.beatConfig.Ftpbeat.Port)
+	logp.Info("Username        : %v\n", bt.beatConfig.Ftpbeat.Username)
+	logp.Info("RemoteDirectory : %v\n", bt.beatConfig.Ftpbeat.RemoteDirectory)
+	logp.Info("Files           : %v\n", bt.beatConfig.Ftpbeat.Files)
+	logp.Info("ExecuteType     : %v\n", bt.beatConfig.Ftpbeat.ExecuteType)
+	logp.Info("===========================================================")
 }
 
 // Setup is a function to setup all beat config & info into the beat struct
@@ -222,7 +222,7 @@ func (bt *Ftpbeat) CheckFiles(con *ftp.ServerConn) error {
 			if err == nil {
 				temp = append(temp, list...)
 			} else {
-				fmt.Println(err)
+				logp.Err(err)
 			}
 		} else {
 			temp = append(temp, fn)
@@ -237,19 +237,21 @@ func (bt *Ftpbeat) CheckFiles(con *ftp.ServerConn) error {
 
 // beat is a function that iterate over the query array, generate and publish events
 func (bt *Ftpbeat) beat(b *beat.Beat) error {
-	fmt.Println("Run Beat Periodically")
+	logp.Info("Run Beat Periodically")
 	con, err := ftp.DialTimeout(fmt.Sprintf("%s:%s", bt.hostname, bt.port), 5*time.Second)
 	if err != nil {
-		fmt.Println("What")
+		logp.Err(err)
 		return err
 	}
 	defer con.Quit()
 	err = con.Login(bt.username, bt.password)
 	if err != nil {
+		logp.Err(err)
 		return err
 	}
 	err = con.ChangeDir(bt.remoteDirectory)
 	if err != nil {
+		logp.Err(err)
 		return err
 	}
 
@@ -260,12 +262,13 @@ func (bt *Ftpbeat) beat(b *beat.Beat) error {
 			var event common.MapStr
 			r, err := con.Retr(file)
 			if err != nil {
+				logp.Err(err)
 				continue LoopReadFiles
 			} else {
 				scan := bufio.NewScanner(r)
 
 				if err := scan.Err(); err != nil {
-					return err
+					logp.Err(err)
 					continue LoopReadFiles
 				}
 				for scan.Scan() {
@@ -278,8 +281,6 @@ func (bt *Ftpbeat) beat(b *beat.Beat) error {
 					event = nil
 				}
 				r.Close()
-
-				logp.Info("event sent")
 			}
 		}
 	} else if bt.executeType == etGet { //"get"
@@ -287,11 +288,13 @@ func (bt *Ftpbeat) beat(b *beat.Beat) error {
 		for _, file := range bt.files {
 			r, err := con.Retr(file)
 			if err != nil {
+				logp.Err(err)
 				continue LoopGetFiles
 			} else {
 				outf, err := os.Create(file)
 				if err != nil {
 					r.Close()
+					logp.Err(err)
 					continue LoopGetFiles
 				}
 				io.Copy(outf, r)
