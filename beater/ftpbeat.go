@@ -79,15 +79,15 @@ func (bt *Ftpbeat) Config(b *beat.Beat) error {
 
 func (bt *Ftpbeat) PrintConfig() {
 	logp.Info("===========================================================")
-	logp.Info("Period           : %v\n", bt.beatConfig.Ftpbeat.Period)
-	logp.Info("ConnectType      : %v\n", bt.beatConfig.Ftpbeat.ConnectType)
-	logp.Info("Hostname         : %v\n", bt.beatConfig.Ftpbeat.Hostname)
-	logp.Info("Port             : %v\n", bt.beatConfig.Ftpbeat.Port)
-	logp.Info("Username         : %v\n", bt.beatConfig.Ftpbeat.Username)
-	logp.Info("RemoteDirectory  : %v\n", bt.beatConfig.Ftpbeat.RemoteDirectory)
-	logp.Info("CurrentDirectory : %v\n", bt.beatConfig.Ftpbeat.CurrentDirectory)
-	logp.Info("Files            : %v\n", bt.beatConfig.Ftpbeat.Files)
-	logp.Info("ExecuteType      : %v\n", bt.beatConfig.Ftpbeat.ExecuteType)
+	logp.Info("Period           : %v", bt.beatConfig.Ftpbeat.Period)
+	logp.Info("ConnectType      : %v", bt.beatConfig.Ftpbeat.ConnectType)
+	logp.Info("Hostname         : %v", bt.beatConfig.Ftpbeat.Hostname)
+	logp.Info("Port             : %v", bt.beatConfig.Ftpbeat.Port)
+	logp.Info("Username         : %v", bt.beatConfig.Ftpbeat.Username)
+	logp.Info("RemoteDirectory  : %v", bt.beatConfig.Ftpbeat.RemoteDirectory)
+	logp.Info("CurrentDirectory : %v", bt.beatConfig.Ftpbeat.CurrentDirectory)
+	logp.Info("Files            : %v", bt.beatConfig.Ftpbeat.Files)
+	logp.Info("ExecuteType      : %v", bt.beatConfig.Ftpbeat.ExecuteType)
 	logp.Info("===========================================================")
 }
 
@@ -223,6 +223,7 @@ func (bt *Ftpbeat) Stop() {
 	close(bt.done)
 }
 
+///*** ftpbeat methods ***///
 // CheckFiles is a function that check files include wildcard character
 func (bt *Ftpbeat) CheckFiles(con *ftp.ServerConn) error {
 	var temp []string
@@ -243,7 +244,52 @@ func (bt *Ftpbeat) CheckFiles(con *ftp.ServerConn) error {
 	return nil
 }
 
-///*** sqlbeat methods ***///
+func (bt *Ftpbeat) GenEvent(file string, con *ftp.ServerConn, b *beat.Beat) error {
+	var event common.MapStr
+	r, err := con.Retr(file)
+	if err != nil {
+		logp.Err(fmt.Sprintf("%v", err))
+		return err
+	} else {
+		scan := bufio.NewScanner(r)
+
+		if err := scan.Err(); err != nil {
+			logp.Err(fmt.Sprintf("%v", err))
+			r.Close()
+			return err
+		}
+		for scan.Scan() {
+			event = common.MapStr{
+				"@timestamp": common.Time(time.Now()),
+				"type":       bt.connnectType,
+			}
+			event["message"] = scan.Text()
+			b.Events.PublishEvent(event)
+			event = nil
+		}
+		r.Close()
+	}
+	return nil
+}
+
+func (bt *Ftpbeat) CopyFile(file string, con *ftp.ServerConn) error {
+	r, err := con.Retr(file)
+	if err != nil {
+		logp.Err(fmt.Sprintf("%v : %s", err, file))
+		return err
+	} else {
+		outf, err := os.Create(filepath.Join(bt.currentDirectory, file))
+		if err != nil {
+			r.Close()
+			logp.Err(fmt.Sprintf("%v : %s", err, file))
+			return err
+		}
+		io.Copy(outf, r)
+		outf.Close()
+		r.Close()
+	}
+	return nil
+}
 
 // beat is a function that iterate over the query array, generate and publish events
 func (bt *Ftpbeat) beat(b *beat.Beat) error {
@@ -266,51 +312,11 @@ func (bt *Ftpbeat) beat(b *beat.Beat) error {
 	}
 
 	bt.CheckFiles(con)
-	if bt.executeType == etRead {
-	LoopReadFiles:
-		for _, file := range bt.files {
-			var event common.MapStr
-			r, err := con.Retr(file)
-			if err != nil {
-				logp.Err(fmt.Sprintf("%v", err))
-				continue LoopReadFiles
-			} else {
-				scan := bufio.NewScanner(r)
-
-				if err := scan.Err(); err != nil {
-					logp.Err(fmt.Sprintf("%v", err))
-					continue LoopReadFiles
-				}
-				for scan.Scan() {
-					event = common.MapStr{
-						"@timestamp": common.Time(time.Now()),
-						"type":       bt.connnectType,
-					}
-					event["message"] = scan.Text()
-					b.Events.PublishEvent(event)
-					event = nil
-				}
-				r.Close()
-			}
-		}
-	} else if bt.executeType == etGet { //"get"
-	LoopGetFiles:
-		for _, file := range bt.files {
-			r, err := con.Retr(file)
-			if err != nil {
-				logp.Err(fmt.Sprintf("%v", err))
-				continue LoopGetFiles
-			} else {
-				outf, err := os.Create(filepath.Join(bt.currentDirectory, file))
-				if err != nil {
-					r.Close()
-					logp.Err(fmt.Sprintf("%v", err))
-					continue LoopGetFiles
-				}
-				io.Copy(outf, r)
-				outf.Close()
-				r.Close()
-			}
+	for _, file := range bt.files {
+		if bt.executeType == etRead {
+			bt.GenEvent(file, con, b)
+		} else {
+			bt.CopyFile(file, con)
 		}
 	}
 	// Great success!
