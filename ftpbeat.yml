@@ -65,20 +65,20 @@ output:
     # Number of workers per Elasticsearch host.
     #worker: 1
 
-    # Optional index name. The default is "sqlbeat" and generates
-    # [sqlbeat-]YYYY.MM.DD keys.
-    #index: "sqlbeat"
+    # Optional index name. The default is "ftpbeat" and generates
+    # [ftpbeat-]YYYY.MM.DD keys.
+    #index: "ftpbeat"
 
     # A template is used to set the mapping in Elasticsearch
     # By default template loading is disabled and no template is loaded.
     # These settings can be adjusted to load your own template or overwrite existing ones
     #template:
 
-      # Template name. By default the template name is sqlbeat.
-      #name: "sqlbeat"
+      # Template name. By default the template name is ftpbeat.
+      #name: "ftpbeat"
 
       # Path to template file
-      #path: "sqlbeat.template.json"
+      #path: "ftpbeat.template.json"
 
       # Overwrite existing template
       #overwrite: false
@@ -160,7 +160,7 @@ output:
 
     # Optional index name. The default index name is set to name of the beat
     # in all lowercase.
-    #index: sqlbeat
+    #index: ftpbeat
 
     # SOCKS5 proxy server URL
     #proxy_url: socks5://user:password@socks5-server:2233
@@ -195,10 +195,10 @@ output:
   ### File as output
   #file:
     # Path to the directory where to save the generated files. The option is mandatory.
-    #path: "/tmp/sqlbeat"
+    #path: "/tmp/ftpbeat"
 
-    # Name of the generated files. The default is `sqlbeat` and it generates files: `sqlbeat`, `sqlbeat.1`, `sqlbeat.2`, etc.
-    #filename: sqlbeat
+    # Name of the generated files. The default is `ftpbeat` and it generates files: `ftpbeat`, `ftpbeat.1`, `ftpbeat.2`, etc.
+    #filename: ftpbeat
 
     # Maximum size in kilobytes of each file. When this size is reached, the files are
     # rotated. The default value is 10240 kB.
@@ -288,10 +288,10 @@ logging:
   # To enable logging to files, to_files option has to be set to true
   #files:
     # The directory where the log files will written to.
-    #path: /var/log/sqlbeat
+    #path: /var/log/ftpbeat
 
     # The name of the files where the logs are written to.
-    #name: sqlbeat
+    #name: ftpbeat.log
 
     # Configure log file size limit. If limit is reached, log file will be
     # automatically rotated
