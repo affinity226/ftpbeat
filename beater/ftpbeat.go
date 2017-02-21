@@ -212,6 +212,27 @@ func (bt *Ftpbeat) Stop() {
 	close(bt.done)
 }
 
+// CheckFiles is a function that check files include wildcard character
+func (bt *Ftpbeat) CheckFiles(con *ftp.ServerConn) error {
+	var temp []string
+	for _, fn := range bt.files {
+		if strings.ContainsAny(fn, "* | ?") {
+			list, err := con.NameList(fn)
+			if err == nil {
+				fmt.Println("LIST : ", list)
+				temp = append(temp, list...)
+			} else {
+				fmt.Println(err)
+			}
+		} else {
+			temp = append(temp, fn)
+		}
+	}
+	fmt.Println(temp)
+	bt.files = temp
+	return nil
+}
+
 ///*** sqlbeat methods ***///
 
 // beat is a function that iterate over the query array, generate and publish events
@@ -261,20 +282,21 @@ func (bt *Ftpbeat) beat(b *beat.Beat) error {
 			}
 		}
 	} else { //"get"
+		bt.CheckFiles(con)
 	LoopGetFiles:
 		for _, file := range bt.files {
 			r, err := con.Retr(file)
 			if err != nil {
 				continue LoopGetFiles
 			} else {
-				//buf, err := ioutil.ReadAll(r)
-
 				outf, err := os.Create(file)
 				if err != nil {
 					r.Close()
 					continue LoopGetFiles
 				}
 				io.Copy(outf, r)
+				outf.Close()
+				r.Close()
 			}
 		}
 	}
