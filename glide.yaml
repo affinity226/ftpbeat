@@ -8,3 +8,4 @@ import:
   - libbeat/common
   - libbeat/logp
 - package: github.com/jlaffaye/ftp
+- package: github.com/pkg/sftp
