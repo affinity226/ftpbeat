@@ -220,7 +220,6 @@ func (bt *Ftpbeat) CheckFiles(con *ftp.ServerConn) error {
 		if strings.ContainsAny(fn, "* | ?") {
 			list, err := con.NameList(fn)
 			if err == nil {
-				fmt.Println("LIST : ", list)
 				temp = append(temp, list...)
 			} else {
 				fmt.Println(err)
@@ -229,8 +228,8 @@ func (bt *Ftpbeat) CheckFiles(con *ftp.ServerConn) error {
 			temp = append(temp, fn)
 		}
 	}
-	fmt.Println(temp)
 	bt.files = temp
+	logp.Info("Files : ", bt.files)
 	return nil
 }
 
@@ -259,10 +258,6 @@ func (bt *Ftpbeat) beat(b *beat.Beat) error {
 	LoopReadFiles:
 		for _, file := range bt.files {
 			var event common.MapStr
-			event = common.MapStr{
-				"@timestamp": common.Time(time.Now()),
-				"type":       bt.connnectType,
-			}
 			r, err := con.Retr(file)
 			if err != nil {
 				continue LoopReadFiles
@@ -274,14 +269,17 @@ func (bt *Ftpbeat) beat(b *beat.Beat) error {
 					continue LoopReadFiles
 				}
 				for scan.Scan() {
+					event = common.MapStr{
+						"@timestamp": common.Time(time.Now()),
+						"type":       bt.connnectType,
+					}
 					event["message"] = scan.Text()
+					b.Events.PublishEvent(event)
+					event = nil
 				}
 				r.Close()
 
 				logp.Info("event sent")
-
-				b.Events.PublishEvent(event)
-				event = nil
 			}
 		}
 	} else if bt.executeType == etGet { //"get"
