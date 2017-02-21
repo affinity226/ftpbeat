@@ -8,13 +8,14 @@ type Config struct {
 }
 
 type FtpbeatConfig struct {
-	Period          string   `yaml:"period"`
-	ConnectType     string   `yaml:"connecttype"`
-	Hostname        string   `yaml:"hostname"`
-	Port            string   `yaml:"port"`
-	Username        string   `yaml:"username"`
-	Password        string   `yaml:"password"`
-	RemoteDirectory string   `yaml:"remotedirectory"`
-	Files           []string `yaml:"files"`
-	ExecuteType     string   `yaml:"executetype"`
+	Period           string   `yaml:"period"`
+	ConnectType      string   `yaml:"connecttype"`
+	Hostname         string   `yaml:"hostname"`
+	Port             string   `yaml:"port"`
+	Username         string   `yaml:"username"`
+	Password         string   `yaml:"password"`
+	RemoteDirectory  string   `yaml:"remotedirectory"`
+	CurrentDirectory string   `yaml:"currentdirectory"`
+	Files            []string `yaml:"files"`
+	ExecuteType      string   `yaml:"executetype"`
 }

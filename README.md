@@ -28,8 +28,9 @@ $ make
 Edit mysqlbeat configuration in ```ftpbeat.yml``` .
 You can:
  * Define Username/Password to connect to the FTP server
- * Define Remote Directory
- * Filenames by using string array
+ * Define Current Directory To Get
+ * Define Remote Directory To Read
+ * Filenames by using String Array
 
 ## How to use
 Just run ```ftpbeat -c ftpbeat.yml``` and you are good to go.
