@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/affinity226/ftpbeat/config"
@@ -237,6 +238,7 @@ func (bt *Ftpbeat) CheckFiles(con *ftp.ServerConn) error {
 
 // beat is a function that iterate over the query array, generate and publish events
 func (bt *Ftpbeat) beat(b *beat.Beat) error {
+	fmt.Println("Run Beat Periodically")
 	con, err := ftp.DialTimeout(fmt.Sprintf("%s:%s", bt.hostname, bt.port), 5*time.Second)
 	if err != nil {
 		fmt.Println("What")
@@ -252,7 +254,8 @@ func (bt *Ftpbeat) beat(b *beat.Beat) error {
 		return err
 	}
 
-	if bt.executeType == "read" {
+	bt.CheckFiles(con)
+	if bt.executeType == etRead {
 	LoopReadFiles:
 		for _, file := range bt.files {
 			var event common.MapStr
@@ -281,8 +284,7 @@ func (bt *Ftpbeat) beat(b *beat.Beat) error {
 				event = nil
 			}
 		}
-	} else { //"get"
-		bt.CheckFiles(con)
+	} else if bt.executeType == etGet { //"get"
 	LoopGetFiles:
 		for _, file := range bt.files {
 			r, err := con.Retr(file)
