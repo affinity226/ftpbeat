@@ -10,6 +10,9 @@ Ftpbeat still on beta.
 
 
 ## Features
+* Get files from remote server
+* Read line by line from remote server's files
+* Support filename include wildcard(*?)
 
 ## How to Build
 
@@ -25,6 +28,8 @@ $ make
 Edit mysqlbeat configuration in ```ftpbeat.yml``` .
 You can:
  * Define Username/Password to connect to the FTP server
+ * Define Remote Directory
+ * Filenames by using string array
 
 ## How to use
 Just run ```ftpbeat -c ftpbeat.yml``` and you are good to go.
