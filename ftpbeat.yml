@@ -14,6 +14,7 @@ ftpbeat:
 
   # Defines the ftp port - leave commented for default ports
   port: "21"
+  #port: "22"
 
   # MAKE SURE THE USER ONLY HAS PERMISSIONS TO RUN THE QUERY DESIRED AND NOTHING ELSE.
   # Defines the ftp user to use

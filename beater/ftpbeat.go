@@ -99,10 +99,10 @@ func (bt *Ftpbeat) Setup(b *beat.Beat) error {
 
 	// Config errors handling
 	switch bt.beatConfig.Ftpbeat.ConnectType {
-	case ctFTP:
+	case ctFTP, ctSFTP:
 		break
 	default:
-		err := fmt.Errorf("Unknown [%s] Connection type, supported types: `ftp`, ``", bt.beatConfig.Ftpbeat.ConnectType)
+		err := fmt.Errorf("Unknown [%s] Connection type, supported types: `ftp`, `sftp`", bt.beatConfig.Ftpbeat.ConnectType)
 		return err
 	}
 
