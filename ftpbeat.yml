@@ -22,13 +22,16 @@ ftpbeat:
   # Defines the ftp password to use
   password: "test.123"
 
-  # Defines the directory for remote server
+  # Defines the directory to get
+  currentdirectory: "current_dir"
+
+  # Defines the directory to read
   remotedirectory: "remote_dir"
 
-  # Defines the filenames that will be get 
+  # Defines the filenames that will be gotten or read
   files: [ "1.log"]
 
-  # Defines the execute type that will be execute -  'get' / 'reading'
+  # Defines the execute type that will be execute -  'get' / 'read'
   executetype: "get"
 
 ###############################################################################
