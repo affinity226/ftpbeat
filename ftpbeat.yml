@@ -6,7 +6,7 @@ ftpbeat:
   # Defines how often an event is sent to the output
   period: 10s
 
-  # Defines the Connection type you are connecting, currently supporting 'ftp' / 'sftp', now only ftp
+  # Defines the Connection type you are connecting, currently supporting 'ftp' / 'sftp'
   connecttype: "ftp"
 
   # Defines the ftp hostname that the beat will connect to

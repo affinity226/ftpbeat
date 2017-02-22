@@ -6,7 +6,8 @@ Fully customizable Beat for FTPL Server - this beat can ship the results of any 
 Ftpbeat still on beta.
 
 #### To Do:
-* Add support for sFtp
+* Support for ssh key 
+* Support encrypted password
 
 
 ## Features
