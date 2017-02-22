@@ -1,5 +1,5 @@
 # Ftpbeat
-Fully customizable Beat for FTPL Server - this beat can ship the results of any query defined on the config file to Elasticsearch.
+Fully customizable Beat for FTP Server - this beat can ship the row of remote file through FTP or SFTP, or get files from remote server.
 
 
 ## Current status
