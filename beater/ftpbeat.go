@@ -1,25 +1,13 @@
 package beater
 
 import (
-	"bufio"
 	"fmt"
-	"io"
-	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/affinity226/ftpbeat/config"
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/cfgfile"
-	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
-
-	// ftp module
-	"github.com/jlaffaye/ftp"
-	"github.com/pkg/sftp"
-	"golang.org/x/crypto/ssh"
-	//"golang.org/x/crypto/ssh/agent"
 )
 
 // Ftpbeat is a struct to hold the beat config & info
@@ -27,7 +15,7 @@ type Ftpbeat struct {
 	beatConfig       *config.Config
 	done             chan struct{}
 	period           time.Duration
-	connnectType     string
+	connectType      string
 	hostname         string
 	port             string
 	username         string
@@ -36,6 +24,8 @@ type Ftpbeat struct {
 	currentDirectory string
 	executeType      string
 	files            []string
+	//runner           interface{}
+	runner integratedFunc
 }
 
 const (
@@ -63,6 +53,15 @@ func New() *Ftpbeat {
 	return &Ftpbeat{
 		done: make(chan struct{}),
 	}
+}
+
+type integratedFunc interface {
+	Init(bt *Ftpbeat) error
+	Login(bt *Ftpbeat) error
+	CheckFiles(bt *Ftpbeat) error
+	GenEvent(file string, bt *Ftpbeat, b *beat.Beat) error
+	CopyFiles(file string, bt *Ftpbeat) error
+	Quit()
 }
 
 ///*** Beater interface methods ***///
@@ -178,7 +177,7 @@ func (bt *Ftpbeat) Setup(b *beat.Beat) error {
 	}
 
 	// Save config values to the bt
-	bt.connnectType = bt.beatConfig.Ftpbeat.ConnectType
+	bt.connectType = bt.beatConfig.Ftpbeat.ConnectType
 	bt.hostname = bt.beatConfig.Ftpbeat.Hostname
 	bt.port = bt.beatConfig.Ftpbeat.Port
 	bt.username = bt.beatConfig.Ftpbeat.Username
@@ -192,6 +191,15 @@ func (bt *Ftpbeat) Setup(b *beat.Beat) error {
 	logp.Info("Total # of files to get : %d", len(bt.files))
 	for index, file := range bt.files {
 		logp.Info("Read #%d : %s", index+1, file)
+	}
+
+	switch bt.connectType {
+	case ctFTP:
+		bt.runner = new(stFTP)
+		break
+	case ctSFTP:
+		bt.runner = new(stSFTP)
+		break
 	}
 
 	return nil
@@ -226,201 +234,30 @@ func (bt *Ftpbeat) Stop() {
 	close(bt.done)
 }
 
-///*** ftpbeat methods ***///
-// CheckFiles is a function that check files include wildcard character
-func (bt *Ftpbeat) CheckFiles(con *ftp.ServerConn) error {
-	var temp []string
-	for _, fn := range bt.files {
-		if strings.ContainsAny(fn, "* | ?") {
-			list, err := con.NameList(fn)
-			if err == nil {
-				temp = append(temp, list...)
-			} else {
-				logp.Err(fmt.Sprintf("%v", err))
-			}
-		} else {
-			temp = append(temp, fn)
-		}
-	}
-	bt.files = temp
-	logp.Info("Files : ", bt.files)
-	return nil
-}
-
-func (bt *Ftpbeat) GenEvent(file string, con *ftp.ServerConn, b *beat.Beat) error {
-	var event common.MapStr
-	r, err := con.Retr(file)
-	if err != nil {
-		logp.Err(fmt.Sprintf("%v", err))
-		return err
-	} else {
-		scan := bufio.NewScanner(r)
-
-		if err := scan.Err(); err != nil {
-			logp.Err(fmt.Sprintf("%v", err))
-			r.Close()
-			return err
-		}
-		for scan.Scan() {
-			event = common.MapStr{
-				"@timestamp": common.Time(time.Now()),
-				"type":       bt.connnectType,
-			}
-			event["message"] = scan.Text()
-			b.Events.PublishEvent(event)
-			event = nil
-		}
-		r.Close()
-	}
-	return nil
-}
-
-func (bt *Ftpbeat) CopyFile(file string, con *ftp.ServerConn) error {
-	r, err := con.Retr(file)
-	if err != nil {
-		logp.Err(fmt.Sprintf("%v : %s", err, file))
-		return err
-	} else {
-		outf, err := os.Create(filepath.Join(bt.currentDirectory, file))
-		if err != nil {
-			r.Close()
-			logp.Err(fmt.Sprintf("%v : %s", err, file))
-			return err
-		}
-		io.Copy(outf, r)
-		outf.Close()
-		r.Close()
-	}
-	return nil
-}
-
-func (bt *Ftpbeat) CheckFilesForSFTP(con *sftp.Client) error {
-	var temp []string
-	for _, fn := range bt.files {
-		if strings.ContainsAny(fn, "* | ?") {
-			list, err := con.Glob(filepath.Join(bt.remoteDirectory, fn))
-			if err == nil {
-				for _, fPath := range list {
-					_, fName := filepath.Split(fPath)
-					temp = append(temp, fName)
-				}
-			} else {
-				logp.Err(fmt.Sprintf("%v", err))
-			}
-		} else {
-			temp = append(temp, fn)
-		}
-	}
-	bt.files = temp
-	logp.Info("Files : ", bt.files)
-	return nil
-}
-
-func (bt *Ftpbeat) GenEventForSFTP(file string, con *sftp.Client, b *beat.Beat) error {
-	var event common.MapStr
-	r, err := con.Open(filepath.Join(bt.remoteDirectory, file))
-	if err != nil {
-		logp.Err(fmt.Sprintf("%v", err))
-		return err
-	} else {
-		scan := bufio.NewScanner(r)
-
-		if err := scan.Err(); err != nil {
-			logp.Err(fmt.Sprintf("%v", err))
-			r.Close()
-			return err
-		}
-		for scan.Scan() {
-			event = common.MapStr{
-				"@timestamp": common.Time(time.Now()),
-				"type":       bt.connnectType,
-			}
-			event["message"] = scan.Text()
-			b.Events.PublishEvent(event)
-			event = nil
-		}
-		r.Close()
-	}
-	return nil
-}
-
-func (bt *Ftpbeat) CopyFileForSFTP(file string, con *sftp.Client) error {
-	r, err := con.Open(filepath.Join(bt.remoteDirectory, file))
-	if err != nil {
-		logp.Err(fmt.Sprintf("%v : %s", err, file))
-		return err
-	} else {
-		outf, err := os.Create(filepath.Join(bt.currentDirectory, file))
-		if err != nil {
-			r.Close()
-			logp.Err(fmt.Sprintf("%v : %s", err, file))
-			return err
-		}
-		io.Copy(outf, r)
-		outf.Close()
-		r.Close()
-	}
-	return nil
-}
-
 // beat is a function that iterate over the query array, generate and publish events
 func (bt *Ftpbeat) beat(b *beat.Beat) error {
 	logp.Info("Run Beat Periodically")
 
-	if bt.connnectType == ctFTP {
-		con, err := ftp.DialTimeout(fmt.Sprintf("%s:%s", bt.hostname, bt.port), 5*time.Second)
-		if err != nil {
-			logp.Err(fmt.Sprintf("%v", err))
-			return err
-		}
-		defer con.Quit()
-		err = con.Login(bt.username, bt.password)
-		if err != nil {
-			logp.Err(fmt.Sprintf("%v", err))
-			return err
-		}
-		err = con.ChangeDir(bt.remoteDirectory)
-		if err != nil {
-			logp.Err(fmt.Sprintf("%v", err))
-			return err
-		}
+	err := bt.runner.Init(bt)
+	if err != nil {
+		return err
+	}
+	defer bt.runner.Quit()
 
-		bt.CheckFiles(con)
-		for _, file := range bt.files {
-			if bt.executeType == etRead {
-				bt.GenEvent(file, con, b)
-			} else {
-				bt.CopyFile(file, con)
-			}
-		}
-	} else if bt.connnectType == ctSFTP {
-		var auths []ssh.AuthMethod
-		auths = append(auths, ssh.Password(bt.password))
-		config := ssh.ClientConfig{
-			User: bt.username,
-			Auth: auths,
-		}
-		con, err := ssh.Dial("tcp", fmt.Sprintf("%s:%s", bt.hostname, bt.port), &config)
-		if err != nil {
-			logp.Err(fmt.Sprintf("%v", err))
-			return err
-		}
-		defer con.Close()
+	err = bt.runner.Login(bt)
+	if err != nil {
+		return err
+	}
 
-		c, err := sftp.NewClient(con, sftp.MaxPacket(1<<15))
-		if err != nil {
-			logp.Err(fmt.Sprintf("%v", err))
-			return err
-		}
-		defer c.Close()
-
-		bt.CheckFilesForSFTP(c)
-		for _, file := range bt.files {
-			if bt.executeType == etRead {
-				bt.GenEventForSFTP(file, c, b)
-			} else {
-				bt.CopyFileForSFTP(file, c)
-			}
+	err = bt.runner.CheckFiles(bt)
+	if err != nil {
+		return err
+	}
+	for _, file := range bt.files {
+		if bt.executeType == etRead {
+			bt.runner.GenEvent(file, bt, b)
+		} else {
+			bt.runner.CopyFiles(file, bt)
 		}
 	}
 	// Great success!
