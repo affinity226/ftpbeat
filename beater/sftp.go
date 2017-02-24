@@ -22,7 +22,6 @@ type stSFTP struct {
 
 func (f *stSFTP) Init(bt *Ftpbeat) error {
 	var err error
-	fmt.Println("SFTP init")
 	var auths []ssh.AuthMethod
 	auths = append(auths, ssh.Password(bt.password))
 	config := ssh.ClientConfig{
@@ -40,7 +39,6 @@ func (f *stSFTP) Init(bt *Ftpbeat) error {
 
 func (f *stSFTP) Login(bt *Ftpbeat) error {
 	var err error
-	fmt.Println("SFTP Login")
 	f.client, err = sftp.NewClient(f.con, sftp.MaxPacket(1<<15))
 	if err != nil {
 		logp.Err(fmt.Sprintf("%v", err))
@@ -50,7 +48,6 @@ func (f *stSFTP) Login(bt *Ftpbeat) error {
 }
 
 func (f *stSFTP) CheckFiles(bt *Ftpbeat) error {
-	fmt.Println("SFTP CheckFiles")
 	var temp []string
 	for _, fn := range bt.files {
 		if strings.ContainsAny(fn, "* | ?") {
@@ -75,7 +72,6 @@ func (f *stSFTP) CheckFiles(bt *Ftpbeat) error {
 }
 
 func (f *stSFTP) GenEvent(file string, bt *Ftpbeat, b *beat.Beat) error {
-	fmt.Println("SFTP GenEvent")
 	var event common.MapStr
 	r, err := f.client.Open(filepath.Join(bt.remoteDirectory, file))
 	if err != nil {
@@ -105,7 +101,6 @@ func (f *stSFTP) GenEvent(file string, bt *Ftpbeat, b *beat.Beat) error {
 }
 
 func (f *stSFTP) CopyFiles(file string, bt *Ftpbeat) error {
-	fmt.Println("SFTP CopyFiles")
 	r, err := f.client.Open(filepath.Join(bt.remoteDirectory, file))
 	if err != nil {
 		logp.Err(fmt.Sprintf("%v : %s", err, file))
@@ -126,7 +121,6 @@ func (f *stSFTP) CopyFiles(file string, bt *Ftpbeat) error {
 }
 
 func (f *stSFTP) Quit() {
-	fmt.Println("SFTP Quit")
 	if f.con != nil {
 		f.con.Close()
 	}

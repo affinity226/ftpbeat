@@ -20,7 +20,6 @@ type stFTP struct {
 
 func (f *stFTP) Init(bt *Ftpbeat) error {
 	var err error
-	fmt.Println("FTP init")
 	f.con, err = ftp.DialTimeout(fmt.Sprintf("%s:%s", bt.hostname, bt.port), 5*time.Second)
 	if err != nil {
 		logp.Err(fmt.Sprintf("%v", err))
@@ -30,7 +29,6 @@ func (f *stFTP) Init(bt *Ftpbeat) error {
 }
 
 func (f *stFTP) Login(bt *Ftpbeat) error {
-	fmt.Println("FTP Login")
 	err := f.con.Login(bt.username, bt.password)
 	if err != nil {
 		logp.Err(fmt.Sprintf("%v", err))
@@ -41,7 +39,6 @@ func (f *stFTP) Login(bt *Ftpbeat) error {
 
 func (f *stFTP) CheckFiles(bt *Ftpbeat) error {
 	var err error
-	fmt.Println("FTP CheckFiles")
 	err = f.con.ChangeDir(bt.remoteDirectory)
 	if err != nil {
 		logp.Err(fmt.Sprintf("%v", err))
@@ -68,7 +65,6 @@ func (f *stFTP) CheckFiles(bt *Ftpbeat) error {
 }
 
 func (f *stFTP) GenEvent(file string, bt *Ftpbeat, b *beat.Beat) error {
-	fmt.Println("FTP GenEvent")
 	var event common.MapStr
 	r, err := f.con.Retr(file)
 	if err != nil {
@@ -98,7 +94,6 @@ func (f *stFTP) GenEvent(file string, bt *Ftpbeat, b *beat.Beat) error {
 }
 
 func (f *stFTP) CopyFiles(file string, bt *Ftpbeat) error {
-	fmt.Println("FTP CopyFiles")
 	r, err := f.con.Retr(file)
 	if err != nil {
 		logp.Err(fmt.Sprintf("%v : %s", err, file))
@@ -118,7 +113,6 @@ func (f *stFTP) CopyFiles(file string, bt *Ftpbeat) error {
 }
 
 func (f *stFTP) Quit() {
-	fmt.Println("FTP Quit")
 	if f.con != nil {
 		f.con.Quit()
 	}
