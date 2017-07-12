@@ -7,7 +7,9 @@ import (
 	"github.com/affinity226/ftpbeat/config"
 	"github.com/elastic/beats/libbeat/beat"
 	"github.com/elastic/beats/libbeat/cfgfile"
+	"github.com/elastic/beats/libbeat/common"
 	"github.com/elastic/beats/libbeat/logp"
+	"github.com/elastic/beats/libbeat/publisher"
 )
 
 // Ftpbeat is a struct to hold the beat config & info
@@ -26,6 +28,7 @@ type Ftpbeat struct {
 	files            []string
 	//runner           interface{}
 	runner integratedFunc
+	client publisher.Client
 }
 
 const (
@@ -49,10 +52,25 @@ const (
 )
 
 // New Creates beater
-func New() *Ftpbeat {
+/*func New() *Ftpbeat {
 	return &Ftpbeat{
 		done: make(chan struct{}),
 	}
+}*/
+func New(b *beat.Beat, cfg *common.Config) (beat.Beater, error) {
+	bt := &Ftpbeat{
+		done: make(chan struct{}),
+	}
+	err := cfgfile.Read(&bt.beatConfig, "")
+	if err != nil {
+		return nil, fmt.Errorf("Error reading config file: %v", err)
+	}
+	err = bt.Setup(b)
+	if err != nil {
+		return nil, fmt.Errorf("Error setting config file: %v", err)
+	}
+	bt.PrintConfig()
+	return bt, err
 }
 
 type integratedFunc interface {
@@ -209,6 +227,8 @@ func (bt *Ftpbeat) Setup(b *beat.Beat) error {
 func (bt *Ftpbeat) Run(b *beat.Beat) error {
 	logp.Info("ftpbeat is running! Hit CTRL-C to stop it.")
 
+	bt.client = b.Publisher.Connect()
+
 	ticker := time.NewTicker(bt.period)
 	for {
 		select {
@@ -231,6 +251,7 @@ func (bt *Ftpbeat) Cleanup(b *beat.Beat) error {
 
 // Stop is a function that runs once the beat is stopped
 func (bt *Ftpbeat) Stop() {
+	bt.client.Close()
 	close(bt.done)
 }
 

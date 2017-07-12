@@ -1,9 +1,10 @@
 BEATNAME=ftpbeat
-BEAT_DIR=github.com/affinity226
+BEAT_DIR=github.com/affinity226/ftpbeat
 SYSTEM_TESTS=false
 TEST_ENVIRONMENT=false
-ES_BEATS=./vendor/github.com/elastic/beats
-GOPACKAGES=$(shell glide novendor)
+ES_BEATS?=./vendor/github.com/elastic/beats
+#GOPACKAGES=$(shell glide novendor)
+GOPACKAGES=$(shell go list ${BEAT_DIR}/... | grep -v /vendor/)
 PREFIX?=.
 
 # Path to the libbeat Makefile

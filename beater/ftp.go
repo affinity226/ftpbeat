@@ -84,7 +84,8 @@ func (f *stFTP) GenEvent(file string, bt *Ftpbeat, b *beat.Beat) error {
 				"type":       bt.connectType,
 			}
 			event["message"] = scan.Text()
-			b.Events.PublishEvent(event)
+			//b.Events.PublishEvent(event)
+			bt.client.PublishEvent(event)
 			event = nil
 		}
 		r.Close()

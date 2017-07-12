@@ -1,11 +1,20 @@
 package: github.com/affinity226/ftpbeat
 import:
+#- package: github.com/elastic/beats
+#  version: d8ca37efa8888ce624e2cfaa90107e79fd41be1e
+#  subpackages:
+#  - libbeat/beat
+#  - libbeat/cfgfile
+#  - libbeat/common
+#  - libbeat/logp
+- package: github.com/jlaffaye/ftp
+- package: github.com/pkg/sftp
 - package: github.com/elastic/beats
-  version: d8ca37efa8888ce624e2cfaa90107e79fd41be1e
+  version: v5.2.1
   subpackages:
   - libbeat/beat
   - libbeat/cfgfile
   - libbeat/common
   - libbeat/logp
-- package: github.com/jlaffaye/ftp
-- package: github.com/pkg/sftp
+  #- libbeat/outputs
+  #- libbeat/publisher
