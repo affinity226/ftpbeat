@@ -1,0 +1,11 @@
+beat_name: ftpbeat
+beat_url: https://github.com/affinity226/ftpbeat
+beat_repo: github.com/affinity226/ftpbeat
+beat_description: Sends events to Elasticsearch or Logstash 
+beat_vendor: Elastic 
+beat_license: ASL 2.0 
+beat_doc_url: https://www.elastic.co/guide/en/beats/ftpbeat/current/index.html 
+version: "1.1.0"
+:stack-version: 5.2.0
+doc_branch: 5.2
+:go-version: 1.7.4
