@@ -1,4 +1,4 @@
-# Welcome to ftpbeat 1.1.0
+# Welcome to ftpbeat 1.2.0
 
 Sends events to Elasticsearch or Logstash
 
@@ -20,4 +20,4 @@ Visit [Elastic.co Docs](https://www.elastic.co/guide/en/beats/ftpbeat/5.2/index.
 
 ## Release notes
 
-https://www.elastic.co/guide/en/beats/libbeat/5.2/release-notes-1.1.0.html
+https://www.elastic.co/guide/en/beats/libbeat/5.2/release-notes-1.2.0.html

@@ -8,9 +8,11 @@ ftpbeat:
 
   # Defines the Connection type you are connecting, currently supporting 'ftp' / 'sftp'
   connecttype: "ftp"
+  #connecttype: "sftp"
 
   # Defines the ftp hostname that the beat will connect to
   hostname: "127.0.0.1"
+  #hostname: "10.211.55.7"
 
   # Defines the ftp port - leave commented for default ports
   port: "21"
@@ -18,22 +20,26 @@ ftpbeat:
 
   # MAKE SURE THE USER ONLY HAS PERMISSIONS TO RUN THE QUERY DESIRED AND NOTHING ELSE.
   # Defines the ftp user to use
-  username: "test_user"
+  #username: "testEnv"
+  username: "1100473"
 
   # Defines the ftp password to use
-  password: "test.123"
+  password: "Wldnjs26"
 
   # Defines the directory to get
-  currentdirectory: "current_dir"
+  currentdirectory: "./"
 
   # Defines the directory to read
-  remotedirectory: "remote_dir"
+  remotedirectory: "./"
 
   # Defines the filenames that will be gotten or read
-  files: [ "1.log"]
+  #files: [ "1.log"]
+  files: [ "tt.sh"]
+  #files: [ "replication-offset-checkpoint"]
 
   # Defines the execute type that will be execute -  'get' / 'read'
-  executetype: "get"
+  #executetype: "get"
+  executetype: "read"
 
 ###############################################################################
 ############################# Libbeat Config ##################################
