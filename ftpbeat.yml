@@ -24,7 +24,7 @@ ftpbeat:
   #username: "1100473"
 
   # Defines the ftp password to use
-  password: "Wldnjs26"
+  password: "123456"
 
   # Defines the directory to get
   currentdirectory: "./"
