@@ -66,11 +66,41 @@ func (f *stSFTP) CheckFiles(bt *Ftpbeat) error {
 		}
 	}
 	bt.files = temp
-	logp.Info("Files : ", bt.files)
+	logp.Info("Files : %v", bt.files)
 	return nil
 
 }
 
+func (f *stSFTP) GenEventForLocalFile(file string, bt *Ftpbeat, b *beat.Beat) error {
+	var event common.MapStr
+	//r, err := f.client.Open(filepath.Join(bt.currentDirectory, file))
+	r, err := os.Open(filepath.Join(bt.currentDirectory, file))
+	if err != nil {
+		logp.Err(fmt.Sprintf("%v", err))
+		return err
+	} else {
+		scan := bufio.NewScanner(r)
+
+		if err := scan.Err(); err != nil {
+			logp.Err(fmt.Sprintf("%v", err))
+			r.Close()
+			return err
+		}
+		for scan.Scan() {
+			event = common.MapStr{
+				"@timestamp": common.Time(time.Now()),
+				"type":       bt.connectType,
+			}
+			event["message"] = scan.Text()
+			//b.Events.PublishEvent(event)
+			bt.client.PublishEvent(event)
+			event = nil
+		}
+		r.Close()
+	}
+	return nil
+
+}
 func (f *stSFTP) GenEvent(file string, bt *Ftpbeat, b *beat.Beat) error {
 	var event common.MapStr
 	r, err := f.client.Open(filepath.Join(bt.remoteDirectory, file))

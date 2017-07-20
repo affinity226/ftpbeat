@@ -78,6 +78,7 @@ type integratedFunc interface {
 	Login(bt *Ftpbeat) error
 	CheckFiles(bt *Ftpbeat) error
 	GenEvent(file string, bt *Ftpbeat, b *beat.Beat) error
+	GenEventForLocalFile(file string, bt *Ftpbeat, b *beat.Beat) error
 	CopyFiles(file string, bt *Ftpbeat) error
 	Quit()
 }
@@ -279,6 +280,7 @@ func (bt *Ftpbeat) beat(b *beat.Beat) error {
 			bt.runner.GenEvent(file, bt, b)
 		} else {
 			bt.runner.CopyFiles(file, bt)
+			bt.runner.GenEventForLocalFile(file, bt, b)
 		}
 	}
 	// Great success!
